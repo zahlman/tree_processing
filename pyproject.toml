@@ -1,0 +1,15 @@
+[project]
+name = "pathvisitor"
+version = "0.1.0"
+description = "A visitor for filesystem (and other) paths"
+readme = "README.md"
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Programming Language :: Python :: 3"
+]
+dependencies = [ ]
+license = {file = "LICENSE.txt"}
+
+[[project.authors]]
+name = "Karl Knechtel"
+email = "zahlman@proton.me"
