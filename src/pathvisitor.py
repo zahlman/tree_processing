@@ -80,19 +80,12 @@ class PathVisitor(NamedTuple):
         yield from filter(None, self._gen(src, onerror, 3))
 
 
-@add_dst_binder
-def copy_folder(dst: Path, src: Path, item: Path):
-    assert (src / item).is_dir()
-    (dst / item).mkdir(exist_ok=True)
-    return True
-
-
 def recurse_into_folders(src: Path, item: Path):
     return True
 
 
 @add_dst_binder
-def hardlink_or_copy_file(dst: Path, src: Path, item: Path):
+def hardlink_or_copy_files(dst: Path, src: Path, item: Path):
     src, dst = src / item, dst / item
     if not src.is_file():
         raise ValueError(f"non-regular file {src} not supported")
@@ -101,7 +94,7 @@ def hardlink_or_copy_file(dst: Path, src: Path, item: Path):
 
 
 @add_dst_binder
-def copy_file(dst: Path, src: Path, item: Path):
+def copy_files(dst: Path, src: Path, item: Path):
     src, dst = src / item, dst / item
     if not src.is_file():
         raise ValueError(f"non-regular file {src} not supported")
@@ -109,8 +102,15 @@ def copy_file(dst: Path, src: Path, item: Path):
     return dst # so that the copied files can be listed by .results
 
 
-def copy_folders(predicate: PathPredicate, dst: Path, src: Path, item: Path):
+def _copy_folders(predicate: PathPredicate, dst: Path, src: Path, item: Path):
     if not predicate(src / item):
         return False
     return copy_folder(dst, src, item)
-copy_folders.matching = lambda p: add_dst_binder(partial(copy_folders, p))
+
+
+def _bind_predicate_to_copy_folders(predicate: PathPredicate):
+    return add_dst_binder(partial(_copy_folders, predicate))
+
+
+copy_folders = _bind_predicate_to_copy_folders(lambda path: True)
+copy_folders.which = _bind_predicate_to_copy_folders
