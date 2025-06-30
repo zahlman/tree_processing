@@ -6,18 +6,21 @@ from typing import Any, Callable, NamedTuple, NewType, Optional
 
 
 class Node(NamedTuple):
-    root: Any # The root node of the tree being traversed.
+    internal: bool
+    name: Any # a relationship between the parent and current nodes.
     current: Any # The current node in the traversal.
-    path: Any # A representation of where the current node is in the tree.
+    parent: Any # The parent of the current node in the traversal.
+    parent_result: Any # The return value from processing the parent.
+    # May be used for example to keep track of position in a destination
+    # tree for copying operations.
 
 
-def node_from_paths(root: PathLike, relative: PathLike):
-    return Node(Path(root), Path(root) / relative, Path(relative))
+def node_from_paths(path: PathLike):
+    path = Path(path).absolute()
+    return Node(path.is_dir(), path.name, path, path.parent)
 
 
 Action = NewType('Action', Callable[[Node], Any])
-# The callable takes the root of the "destination" tree as well as a Node.
-TargetedAction = NewType('TargetedAction', Callable[[Any, Node], Any])
 
 
 class _chain(tuple):
@@ -50,31 +53,25 @@ def filterable(func: Action):
     return _result(_chain())
 
 
-def targetable(func: TargetedAction):
-    '''A decorator to add targeting (and filtering) to a TargetedAction.'''
-    func.to = lambda target: filterable(partial(func, target))
-    return func
-
-
 # Some useful actions specifically for filesystem traversals.
 
 
 @chainable
 def not_hidden(node: Node):
-    return not node.path.name.startswith('.')
+    return not node.name.startswith('.')
 
 
 @filterable
-def recurse_into_folders(src: Path, item: Path):
+def recurse_into_folders(node: Node):
     '''A helper to do nothing special with folders.'''
     pass
 
 
 # Adapt a function that accepts src and dst paths,
 # into one that works with the above interface.
-def _reflect_regular_file(func: Callable[[Path, Path], Any]):
-    def reflected(dst: Path, src: Node):
-        src, dst = src.current, (dst / src.path)
+def _reflect_regular_file(func: Action):
+    def reflected(node: Node):
+        src, dst = node.current, (node.parent_result / node.name)
         if not src.is_file():
             raise ValueError(f"non-regular file {src} not supported")
         func(src, dst)
@@ -82,17 +79,17 @@ def _reflect_regular_file(func: Callable[[Path, Path], Any]):
     return reflected
 
 
-#hardlink_or_copy_files = targetable(_reflect_regular_file(hardlink_or_copy))
-copy_files = targetable(_reflect_regular_file(copy))
+#hardlink_or_copy_files = _reflect_regular_file(hardlink_or_copy)
+copy_files = _reflect_regular_file(copy)
 
 
-@targetable
 @_reflect_regular_file
 def fake_copy_files(src, dst): # For testing.
     print(f'Would copy {src} to {dst}')
 
 
-@targetable
-def copy_folder(dst: Path, src: Node):
-    assert src.current.is_dir()
-    (dst / src.path).mkdir(exist_ok=True)
+def copy_folder(node: Node):
+    assert node.current.is_dir()
+    dst = node.parent_result / node.name
+    dst.mkdir(exist_ok=True)
+    return dst
