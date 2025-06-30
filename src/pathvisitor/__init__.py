@@ -102,10 +102,15 @@ def copy_files(dst: Path, src: Path, item: Path):
     return dst # so that the copied files can be listed by .results
 
 
+def _copy_folder(dst: Path, src: Path, item: Path):
+    assert (src / item).is_dir()
+    (dst / item).mkdir(exist_ok=True)
+
+
 def _copy_folders(predicate: PathPredicate, dst: Path, src: Path, item: Path):
     if not predicate(src / item):
         return False
-    return copy_folder(dst, src, item)
+    return _copy_folder(dst, src, item)
 
 
 def _bind_predicate_to_copy_folders(predicate: PathPredicate):
