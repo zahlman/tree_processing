@@ -1,8 +1,8 @@
 from functools import partial
-from os import PathLike, walk
+from os import PathLike
 from pathlib import Path
 from shutil import copy
-from typing import Any, Callable, NamedTuple, NewType, Optional
+from typing import Any, Callable, NamedTuple, NewType
 
 
 class Node(NamedTuple):
