@@ -1,5 +1,35 @@
+from os import scandir
+from pathlib import Path
 from shutil import copy
+from typing import Tuple
 from .actions import chainable, filterable, Node
+
+
+# Rule to get children of a filesystem node.
+def _wrap_scandir(node):
+    to_scan = node.current
+    if isinstance(to_scan, tuple): # "mirroring" traversal
+        to_scan = to_scan[0]
+    with scandir(node.current) as entries:
+        for entry in entries:
+            name = entry.name
+            # non-directories first, then directories
+            yield (entry.is_dir(), name, entry.path)
+
+
+def make(node, entry):
+    internal, name, path = entry
+    new_current, new_parent = Path(path), node.current
+    if isinstance(new_parent, tuple): # "mirroring" traversal.
+        new_current = (new_current, new_parent[1] / name)
+    return Node(internal, name, new_current, new_parent)
+
+
+def get_children(parent: Node, onerror=None):
+    try:
+        return [make(parent, e) for e in _wrap_scandir(parent)]
+    except OSError as e:
+        return [] if onerror is None else onerror(e)
 
 
 # Some useful actions and filters specifically for filesystem traversals.
