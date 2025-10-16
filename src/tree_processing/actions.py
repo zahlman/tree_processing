@@ -1,34 +1,40 @@
 from functools import partial
-from os import PathLike
-from pathlib import Path
 from shutil import copy
-from typing import Any, Callable, NamedTuple, NewType
+from typing import Any, Callable, NamedTuple, NewType, Self
 
 
 class Node(NamedTuple):
-    internal: bool
+    '''Structure representing a node in a traversal.'''
+    internal: bool # whether the node may potentially have children.
+    # In top-down traversals, this value is checked after processing,
+    # so it can be set to False to prevent recursing over children.
     name: Any # a relationship between the parent and current nodes.
     current: Any # The current node in the traversal.
     parent: Any # The parent of the current node in the traversal.
-    parent_result: Any # The return value from processing the parent.
-    # May be used for example to keep track of position in a destination
-    # tree for copying operations.
+    # N.B. For "mirroring" operations, `current` and `parent` could be
+    # (src, dst) tuples rather than single values.
 
 
-def node_from_paths(path: PathLike):
-    path = Path(path).absolute()
-    return Node(path.is_dir(), path.name, path, path.parent)
+class NodeError(ValueError):
+    '''Represents encountering a node in a traversal which should abort
+    the entire traversal with an error (which can be detected to
+    trigger any necessary cleanup).'''
+    pass
 
 
 Action = NewType('Action', Callable[[Node], Any])
+Filter = NewType('Filter', Callable[[Node], bool])
 
 
-class _chain(tuple):
-    def __and__(self, another):
-        if isinstance(another, _chain):
-            return _chain(self + another)
+class _filter_chain(tuple):
+    def __and__(self, another: Filter | Self):
+        # Attempt to "flatten" concatenated chains.
+        # Chains are callable (and in fact Filters), so it's not a real
+        # problem if this fails.
+        if isinstance(another, _filter_chain):
+            return _filter_chain(self + another)
         if callable(another):
-            return _chain(self + (another,))
+            return _filter_chain(self + (another,))
         raise TypeError("can only concatenate a callable or another chain")
 
 
@@ -36,29 +42,45 @@ class _chain(tuple):
         return all(f(node) for f in self)
 
 
-def chainable(func: Action):
-    '''A decorator to make a Action chainable.'''
-    return _chain() & func
+def chainable(func: Filter):
+    '''A decorator to make a Filter chainable.'''
+    return _filter_chain() & func
 
 
 _rejected = object()
 def filterable(func: Action):
     '''A decorator to add filtering to an Action.'''
-    def _filtered(filter_chain: _chain, node: Node):
+    def _filtered(filter_chain: _filter_chain, node: Node):
+        # Main traversal logic must check for this sentinel value
+        # as well as checking if `internal` was set False.
         return func(node) if filter_chain(node) else _rejected
-    def _result(filter_chain: _chain):
+    def _result(filter_chain: _filter_chain):
         result = partial(_filtered, filter_chain)
         result.which = lambda another: _result(filter_chain & another)
         return result
-    return _result(_chain())
+    return _result(_filter_chain())
 
 
-# Some useful actions specifically for filesystem traversals.
+# Some useful actions and filters specifically for filesystem traversals.
 
 
 @chainable
 def not_hidden(node: Node):
     return not node.name.startswith('.')
+
+
+@chainable
+def src_is_regular_file(node: Node):
+    src, dst = node.current
+    return src.is_file()
+
+
+def require(f: Filter):
+    def wrapper(node: Node):
+        if not f(node):
+            raise NodeError 
+        return True
+    return wrapper
 
 
 @filterable
@@ -68,28 +90,31 @@ def recurse_into_folders(node: Node):
 
 
 # Adapt a function that accepts src and dst paths,
-# into one that works with the above interface.
-def _reflect_regular_file(func: Action):
-    def reflected(node: Node):
-        src, dst = node.current, (node.parent_result / node.name)
-        if not src.is_file():
-            raise ValueError(f"non-regular file {src} not supported")
-        func(src, dst)
-        return dst
-    return reflected
+# into one that expects a `(src, dst)` pair in `node.current`.
+def _mirror(func):
+    return filterable(lambda node: func(*node.current))
 
 
 #hardlink_or_copy_files = _reflect_regular_file(hardlink_or_copy)
-copy_files = _reflect_regular_file(copy)
+copy_files = _mirror(filterable(copy).which(src_is_regular_file))
 
 
-@_reflect_regular_file
-def fake_copy_files(src, dst): # For testing.
+def _fake_copy(src, dst): # For testing.
     print(f'Would copy {src} to {dst}')
 
 
-def copy_folder(node: Node):
-    assert node.current.is_dir()
-    dst = node.parent_result / node.name
+fake_copy_files = _mirror(filterable(_fake_copy).which(src_is_regular_file))
+
+
+@filterable
+def propagate_folders(node: Node):
+    src, dst = node.current
+    assert src.is_dir()
     dst.mkdir(exist_ok=True)
-    return dst
+
+
+@filterable
+def fake_propagate_folders(node: Node):
+    src, dst = node.current
+    assert src.is_dir()
+    print(f'Would create folder {dst} if missing')
