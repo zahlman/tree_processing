@@ -10,7 +10,7 @@ def _wrap_scandir(node):
     to_scan = node.current
     if isinstance(to_scan, tuple): # "mirroring" traversal
         to_scan = to_scan[0]
-    with scandir(node.current) as entries:
+    with scandir(to_scan) as entries:
         for entry in entries:
             name = entry.name
             # non-directories first, then directories
@@ -66,7 +66,7 @@ def _fake_copy(src, dst): # For testing.
     print(f'Would copy {src} to {dst}')
 
 
-fake_copy_files = _mirror(filterable(_fake_copy).which(src_is_regular_file))
+fake_copy_files = filterable(_mirror(_fake_copy)).which(src_is_regular_file)
 
 
 @filterable
