@@ -56,8 +56,18 @@ def _mirror(func):
     return filterable(lambda node: func(*node.current))
 
 
-#hardlink_or_copy_files = _reflect_regular_file(hardlink_or_copy)
 copy_files = _mirror(filterable(copy).which(src_is_regular_file))
+
+
+# Path.hardlink_to requires 3.10.
+# For better compatibility, we fall back to the os module
+# and also fall back on copying if hardlinks fail for any reason.
+def hardlink_or_copy(src, dst):
+    try:
+        link(src, dst)
+    except:
+        copy(src, dst)
+hardlink_or_copy_files = _mirror(hardlink_or_copy)
 
 
 def _fake_copy(src, dst): # For testing.
