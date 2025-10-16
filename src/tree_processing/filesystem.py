@@ -12,9 +12,7 @@ def _wrap_scandir(node):
         to_scan = to_scan[0]
     with scandir(to_scan) as entries:
         for entry in entries:
-            name = entry.name
-            # non-directories first, then directories
-            yield (entry.is_dir(), name, entry.path)
+            yield (entry.is_dir(), entry.name, entry.path)
 
 
 def make(node, entry):
