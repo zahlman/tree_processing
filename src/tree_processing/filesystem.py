@@ -1,4 +1,4 @@
-from os import scandir
+from os import link as _hardlink, scandir as _scan_directory
 from pathlib import Path
 from shutil import copy
 from typing import Tuple
@@ -6,11 +6,11 @@ from .actions import chainable, filterable, Node
 
 
 # Rule to get children of a filesystem node.
-def _wrap_scandir(node):
+def _children_of(node):
     to_scan = node.current
     if isinstance(to_scan, tuple): # "mirroring" traversal
         to_scan = to_scan[0]
-    with scandir(to_scan) as entries:
+    with _scan_directory(to_scan) as entries:
         for entry in entries:
             yield (entry.is_dir(), entry.name, entry.path)
 
@@ -25,7 +25,7 @@ def make(node, entry):
 
 def get_children(parent: Node, onerror=None):
     try:
-        return [make(parent, e) for e in _wrap_scandir(parent)]
+        return [make(parent, e) for e in _children_of(parent)]
     except OSError as e:
         return [] if onerror is None else onerror(e)
 
