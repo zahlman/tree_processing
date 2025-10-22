@@ -1,5 +1,4 @@
 from functools import partial
-from shutil import copy
 from typing import Any, Callable, NamedTuple, NewType, Self
 
 
