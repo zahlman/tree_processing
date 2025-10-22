@@ -1,3 +1,6 @@
+from .actions import Node
+
+
 def _reorder(children, stack):
     internal = []
     for c in children:
@@ -11,7 +14,7 @@ def _reorder(children, stack):
 
 
 def topdown(root, get_children):
-    stack = [root]
+    stack = [Node(True, None, root, None)]
     while stack:
         top = stack.pop()
         if not top.internal:
