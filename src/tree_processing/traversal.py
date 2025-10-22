@@ -5,11 +5,13 @@ def topdown(root, get_children):
         if not top.internal:
             continue # skipped by processing
         children = get_children(top)
+        internal = []
         for c in children:
             if not c.internal:
                 yield c
-        for c in children:
-            if c.internal:
-                recurse = (yield c)
+            else:
+                internal.append(c) # for second pass
+        for c in internal:
+            recurse = (yield c)
             if recurse:
                 stack.append(c)
