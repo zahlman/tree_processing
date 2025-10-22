@@ -1,7 +1,7 @@
 [project]
-name = "pathvisitor"
+name = "tree_processing"
 version = "0.1.0"
-description = "A visitor for filesystem (and other) paths"
+description = "Elegant composition of tree-traversal algorithms"
 readme = "README.md"
 classifiers = [
     "Development Status :: 1 - Planning",
