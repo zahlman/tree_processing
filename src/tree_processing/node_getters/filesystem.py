@@ -21,7 +21,7 @@ def make(node, entry):
     return Node(internal, name, new_current, new_parent)
 
 
-def get_children(parent: Node, onerror=None):
+def get(parent: Node, onerror=None):
     try:
         return [make(parent, e) for e in _children_of(parent)]
     except OSError as e:
