@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from tree_processing.filesystem import fake_propagate_folders, fake_copy_regular_files, get_children, not_hidden
+from tree_processing.actions.filesystem import fake_propagate_folders, fake_copy_regular_files, not_hidden
+from tree_processing.generators.filesystem import get_children
 from tree_processing.traversal import topdown
 from tree_processing.actions import _rejected, Node
 

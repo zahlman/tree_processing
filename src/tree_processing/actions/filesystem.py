@@ -2,7 +2,7 @@ from os import link as _hardlink, scandir as _scan_directory
 from pathlib import Path
 from shutil import copy
 from typing import Tuple
-from .actions import chainable, filterable, Node
+from . import chainable, filterable, Node
 
 
 # Rule to get children of a filesystem node.
