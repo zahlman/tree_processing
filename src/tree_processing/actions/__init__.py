@@ -1,6 +1,8 @@
 from functools import partial
 from typing import Any, Callable, NamedTuple, NewType, Self
 
+from .. import rejected
+
 
 class Node(NamedTuple):
     '''Structure representing a node in a traversal.'''
@@ -44,13 +46,12 @@ def chainable(func: Filter):
     return _filter_chain() & func
 
 
-_rejected = object()
 def filterable(func: Action):
     '''A decorator to add filtering to an Action.'''
     def _filtered(filter_chain: _filter_chain, node: Node):
         # Main traversal logic must check for this sentinel value
         # as well as checking if `internal` was set False.
-        return func(node) if filter_chain(node) else _rejected
+        return func(node) if filter_chain(node) else rejected
     def _result(filter_chain: _filter_chain):
         result = partial(_filtered, filter_chain)
         result.which = lambda another: _result(filter_chain & another)

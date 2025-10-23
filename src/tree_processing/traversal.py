@@ -1,4 +1,5 @@
-from .actions import Node, _rejected
+from .actions import Node
+from . import rejected
 
 
 def _reorder(children, stack):
@@ -9,7 +10,7 @@ def _reorder(children, stack):
         else:
             yield c
     for c in internal:
-        if (yield c) is not _rejected:
+        if (yield c) is not rejected:
             stack.append(c)
 
 

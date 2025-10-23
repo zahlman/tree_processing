@@ -2,7 +2,7 @@ from os import scandir as _scan_directory
 from pathlib import Path
 
 from . import make_getter
-from ..actions import Node, _rejected
+from ..actions import Node
 
 
 # Client code can customize the get and make routines by attaching filters
