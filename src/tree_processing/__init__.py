@@ -3,9 +3,8 @@ from tree_processing.actions import _rejected
 
 def _process_one(node, traversal, act, accumulate, total):
     result = act[0 if node.internal else 1](node)
-    accepted = (result is not _rejected)
-    next_node = traversal.send(accepted)
-    if accepted and accumulate is not None:
+    next_node = traversal.send(result)
+    if result is not _rejected and accumulate is not None:
         total = accumulate(total, result)
     return next_node, total
 
