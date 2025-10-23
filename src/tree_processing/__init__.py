@@ -24,24 +24,25 @@ class rejected:
 rejected = rejected()
 
 
-def _process_one(node, traversal, act, accumulate, total):
-    result = act[0 if node.internal else 1](node)
-    next_node = traversal.send(result)
-    if result is not rejected and accumulate is not None:
-        total = accumulate(total, result)
-    return next_node, total
+def _process_one(node, traversal, act, accumulator):
+    act = act[0 if node.internal else 1]
+    use_accumulator = (accumulator[0] is not rejected)
+    result = act(node, accumulator[0]) if use_accumulator else act(node)
+    if result is not rejected and use_accumulator:
+        accumulator[0] = result
+    return traversal.send(result)
 
 
-def _process(traversal, act, accumulate, total):
+def _process(traversal, act, accumulator):
     node = next(traversal)
     while True:
         try:
-            node, total = _process_one(node, traversal, act, accumulate, total)
+            node = _process_one(node, traversal, act, accumulator)
         except StopIteration:
-            return total
+            return accumulator[0]
 
 
-def process(traverse, root, get_children, act, accumulate=None, total=None):
+def process(traverse, root, get_children, act, initial=rejected):
     traversal = traverse(root, get_children)
     try:
         process_folder, process_file = act
@@ -49,4 +50,4 @@ def process(traverse, root, get_children, act, accumulate=None, total=None):
         # If an iterable is provided but it has the wrong number of
         # callables, that `ValueError` should propagate.
         act = act, act
-    return _process(traversal, act, accumulate, total)
+    return _process(traversal, act, [initial])

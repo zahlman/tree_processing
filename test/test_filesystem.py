@@ -10,8 +10,8 @@ def test_fake_copy():
     not_pycache = lambda node: node.name != '__pycache__'
     process_folder = fake_propagate_folders.which(not_hidden & not_pycache)
     process_file = fake_copy_regular_files.which(not_hidden)
-    # This will fail, but lets us see output for now.
-    assert process(topdown, root, default_get, (process_folder, process_file))
+    process(topdown, root, default_get, (process_folder, process_file))
+    assert False # just see the printed output for now.
 
 
 def test_naive_iterate():
@@ -21,3 +21,35 @@ def test_naive_iterate():
         if not src.name.endswith('.pyc'): # still checks __pycache__ folders!
             print(f"mirror {src} -> {dst}")
     assert False
+
+
+def incremented_folders(f, counter):
+    folders, files = counter
+    return (folders + 1, files)
+
+
+def incremented_files(f, counter):
+    folders, files = counter
+    return (folders, files + 1)
+
+
+def test_count_immutable():
+    root = make_root('src')
+    act = (incremented_folders, incremented_files)
+    assert not process(topdown, make_root('src'), default_get, act, (0, 0))
+
+
+def increment_folders(f, counter):
+    counter[0] += 1
+    return counter
+
+
+def increment_files(f, counter):
+    counter[1] += 1
+    return counter
+
+
+def test_count_mutable():
+    root = make_root('src')
+    act = (increment_folders, increment_files)
+    assert not process(topdown, make_root('src'), default_get, act, [0, 0])
