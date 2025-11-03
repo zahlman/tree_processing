@@ -15,9 +15,11 @@ def _reorder(children, stack):
 
 
 def topdown(root, get_children):
-    stack = [Node(True, None, root, None)]
+    root_node = Node(True, None, root, None)
+    # FIXME: The root node should get included, but in order for it to be
+    # properly processed, it has to get named first somehow.
+    # yield root_node
+    stack = [root_node]
     while stack:
         top = stack.pop()
-        if not top.internal:
-            continue # skipped by processing
         yield from _reorder(get_children(top), stack)
