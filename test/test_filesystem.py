@@ -4,22 +4,42 @@ from tree_processing.traversal import topdown
 from tree_processing.actions import Node
 from tree_processing import process
 
+from os import chdir, getcwd, mkdir
+from pathlib import Path
+from zipfile import ZipFile
 
-def test_fake_copy():
-    root = make_root('src', '/tmp')
-    not_pycache = lambda node: node.name != '__pycache__'
-    process_folder = fake_propagate_folders.which(not_hidden & not_pycache)
+from pytest import fixture, mark
+parametrize = mark.parametrize
+
+
+TREE_DIR = Path(__file__).parent / 'trees'
+
+
+@fixture(params=('empty', 'sample'))
+def setup(tmpdir, request):
+    old = getcwd()
+    # Unzip a sample file hierarchy directly into the tmpdir.
+    name = request.param
+    with ZipFile(TREE_DIR / f'{name}.zip') as zf:
+        zf.extractall(tmpdir)
+    chdir(tmpdir)
+    yield (TREE_DIR / f'{name}.toml').read_text()
+    chdir(old)
+
+
+def test_fake_copy(tmpdir, setup):
+    root = make_root('.', '/tmp')
+    process_folder = fake_propagate_folders.which(not_hidden)
     process_file = fake_copy_regular_files.which(not_hidden)
     process(topdown, root, default_get, (process_folder, process_file))
     assert False # just see the printed output for now.
 
 
-def test_naive_iterate():
-    root = make_root('src', '/tmp')
+def test_naive_iterate(tmpdir, setup):
+    root = make_root('.', '/tmp')
     for node in topdown(root, default_get):
         src, dst = node.current
-        if not src.name.endswith('.pyc'): # still checks __pycache__ folders!
-            print(f"mirror {src} -> {dst}")
+        print(f"mirror {src} -> {dst}")
     assert False
 
 
