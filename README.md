@@ -1,15 +1,15 @@
-# pathvisitor - A visitor for filesystem (and other) paths
+# `tree_processing` - Elegant composition of tree-traversal algorithms
 
-[![](https://img.shields.io/pypi/v/pathvisitor.svg)](https://pypi.org/project/pathvisitor)
-<!-- [![Documentation Status](https://readthedocs.org/projects/pathvisitor/badge/?version=latest)](https://pathvisitor.readthedocs.io/en/latest/?version=latest) -->
+[![](https://img.shields.io/pypi/v/tree_processing.svg)](https://pypi.org/project/tree_processing)
+<!-- [![Documentation Status](https://readthedocs.org/projects/tree_processing/badge/?version=latest)](https://tree_processing.readthedocs.io/en/latest/?version=latest) -->
 
 ## Installation
 
-`pip install pathvisitor`
+`pip install tree_processing`
 
 ## Description
 
-`pathvisitor` is designed to generalize the process of operating on a tree of files and folders - whether that's to rename everything, copy it somewhere else. It's meant to take the annoyance out of walking the directory structure with `pathlib.Path.walk` (or `os.walk`), while still offering more power and flexibility than `shutil`'s tree functions. Simply specify the action to take on files and folders, and `pathvisitor` takes care of the rest. Several common actions are also defined for convenience.
+`tree_processing` is designed to generalize the process of operating on a tree of files and folders - whether that's to rename everything, copy it somewhere else. It's meant to take the annoyance out of walking the directory structure with `pathlib.Path.walk` (or `os.walk`), while still offering more power and flexibility than `shutil`'s tree functions. Simply specify the action to take on files and folders, and `tree_processing` takes care of the rest. Several common actions are also defined for convenience.
 
 The basic algorithm is also designed to be extensible, such that any kind of tree can be walked - treating internal nodes as "directories" and leaf nodes as "files". Unlike classical implementations of the Visitor pattern, however, polymorphic treatment of internal and leaf nodes is left up to the end user (for example, using `functools.singledispatch`).
 
@@ -20,7 +20,7 @@ By default, symlinks are treated as ordinary files.
 Copy all files, folders and symlinks (like `shutil.copytree` with `symlinks=True` and `copy_function=shutil.copy`:
 
 ```
-from pathvisitor import PathVisitor, copy_file, copy_folder
+from tree_processing import PathVisitor, copy_file, copy_folder
 
 def copy_tree(src, dst):
     PathVisitor(copy_folder.to(dst), copy_file.to(dst)).process(src)
@@ -29,7 +29,7 @@ def copy_tree(src, dst):
 Count lines in all files (assuming only directories and regular files):
 
 ```
-from pathvisitor import PathVisitor, recurse_into_folders
+from tree_processing import PathVisitor, recurse_into_folders
 
 def line_count(file_path):
     # The built-in traversals provide pathlib.Path objects.
@@ -47,7 +47,7 @@ def count_all_lines(src):
 List non-hidden files in non-hidden folders (not quite like `ls -1R` - this will show the path to each file, instead of grouping the results by folder):
 
 ```
-from pathvisitor import PathVisitor
+from tree_processing import PathVisitor
 
 def not_hidden(src, item):
     return not item.name.startswith('.')
