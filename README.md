@@ -68,41 +68,50 @@ Filtering is naturally a modification to other parts of the process, rather than
 Copy all files, folders and symlinks (like `shutil.copytree` with `symlinks=True` and `copy_function=shutil.copy`:
 
 ```
-from tree_processing import PathVisitor, copy_file, copy_folder
+from tree_processing.traversal import topdown
+from tree_processing.actions.filesystem import copy_files, propagate_folders
+from tree_processing.node_getters.filesystem import default_get, make_root
 
 def copy_tree(src, dst):
-    PathVisitor(copy_folder.to(dst), copy_file.to(dst)).process(src)
+    topdown(make_root(src, dst), get=default_get)(propagate_folders, copy_files)
+```
+
+List non-hidden files in non-hidden folders:
+
+```
+from tree_processing.traversal import topdown
+from tree_processing.actions.filesystem import hidden
+from tree_processing.node_getters.filesystem import default_get, make_root
+
+def display_files(node):
+    if not node.internal:
+        print(f'{node.current}')
+
+def print_visible_files(src):
+    # When a single action is passed, it's used for both files and folders.
+    topdown(make_root(src), get=default_get.which(~hidden))(display_files)
 ```
 
 Count lines in all files (assuming only directories and regular files):
 
 ```
-from tree_processing import PathVisitor, recurse_into_folders
+from tree_processing.traversal import topdown
+from tree_processing.node_getters.filesystem import default_get, make_root
 
-def line_count(file_path):
+# When an `initial` value is passed, the action receives an `accumulator`
+# which is initialized to `initial` and carries forward the value from
+# previous nodes.
+def add_lines(node, accumulator):
+    if node.internal:
+        return accumulator # skip folders
+    file_path = node.current
     # The built-in traversals provide pathlib.Path objects.
-    if not file_path.is_file():
-        raise NotImplementedError
-    # Iterate over the file and count lines in Python.
-    # Alternately, we could e.g. shell out to `wc -l` on Linux/Mac.
-    with open(filename) as f:
-        return sum(1 for _ in f)
+    assert file_path.is_file()
+    with open(file_path) as f:
+        return accumulator + sum(1 for _ in f)
 
 def count_all_lines(src):
-    return sum(PathVisitor(recurse_into_folders, line_count).results())
-```
-
-List non-hidden files in non-hidden folders (not quite like `ls -1R` - this will show the path to each file, instead of grouping the results by folder):
-
-```
-from tree_processing import PathVisitor
-
-def not_hidden(src, item):
-    return not item.name.startswith('.')
-
-def visible_files(src):
-    files = PathVisitor(not_hidden, not_hidden).filter_files(src)
-    print(*files, sep='\n')
+    return topdown(make_root(src), get=default_get)(add_lines, initial=0)
 ```
 
 ----
