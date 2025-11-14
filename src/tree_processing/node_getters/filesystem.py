@@ -27,4 +27,6 @@ default_get = make_getter(raw_get, make_node)
 
 
 def make_root(src, dst=None):
-    return Path(src) if dst is None else (Path(src), Path(dst))
+    src = Path(src)
+    current = src if dst is None else (src, Path(dst))
+    return Node(src.is_dir(), src.name, current, None)
