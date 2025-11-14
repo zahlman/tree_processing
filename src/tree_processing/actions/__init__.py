@@ -1,7 +1,7 @@
 from functools import partial
 from typing import Any, Callable, NamedTuple, NewType, Self
 
-from .. import rejected
+from .. import NodeError, rejected
 
 
 class Node(NamedTuple):
@@ -12,13 +12,6 @@ class Node(NamedTuple):
     parent: Any # The parent of the current node in the traversal.
     # N.B. For "mirroring" operations, `current` and `parent` could be
     # (src, dst) tuples rather than single values.
-
-
-class NodeError(ValueError):
-    '''Represents encountering a node in a traversal which should abort
-    the entire traversal with an error (which can be detected to
-    trigger any necessary cleanup).'''
-    pass
 
 
 Action = NewType('Action', Callable[[Node], Any])
