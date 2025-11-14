@@ -28,7 +28,6 @@ rejected = rejected()
 
 
 def _process_one(node, traversal, act, accumulator):
-    act = act[0 if node.internal else 1]
     use_accumulator = (accumulator[0] is not rejected)
     result = act(node, accumulator[0]) if use_accumulator else act(node)
     if result is not rejected and use_accumulator:
@@ -36,15 +35,21 @@ def _process_one(node, traversal, act, accumulator):
     return traversal.send(result)
 
 
+def _dispatch(process_folder, process_file):
+    def _act(node, *args):
+        return (process_folder if node.internal else process_file)(node, *args)
+    return _act
+
+
 def _normalize_act(act):
     try:
         process_folder, process_file = act
-    except TypeError: # not iterable
+    except TypeError: # not iterable, so a single callable
         # If an iterable is provided but it has the wrong number of
         # callables, that `ValueError` should propagate.
-        return act, act
-    else:
         return act
+    else:
+        return _dispatch(process_folder, process_file)
 
 
 def _process(traversal, act, accumulator):
