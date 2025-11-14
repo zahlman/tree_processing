@@ -38,10 +38,11 @@ def _normalize_act(act):
     try:
         process_folder, process_file = act
     except TypeError: # not iterable, so a single callable
-        # If an iterable is provided but it has the wrong number of
-        # callables, that `ValueError` should propagate.
         return act
-    else:
+    except ValueError: # a single callable, or else propagate the error
+        act, = act
+        return act
+    else: # create a simple dispatch for the two callables.
         return lambda n: (process_folder if n.internal else process_file)(n)
 
 
@@ -68,7 +69,7 @@ class Traversal:
         yield from self._traverse(self._root, self._get)
 
 
-    def __call__(self, act, initial=rejected):
+    def __call__(self, *act):
         return _process(iter(self), act)
 
 

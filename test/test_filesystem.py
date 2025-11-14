@@ -31,7 +31,7 @@ def test_fake_copy(tmpdir, setup):
     root = make_root('.', '/tmp')
     process_folder = fake_propagate_folders.which(not_hidden)
     process_file = fake_copy_regular_files.which(not_hidden)
-    process(topdown, root, default_get, (process_folder, process_file))
+    topdown(root, default_get)(process_folder, process_file)
     assert False # just see the printed output for now.
 
 
@@ -58,7 +58,7 @@ def pairwise_sum(t1, t2):
 def test_count_immutable():
     root = make_root('src')
     act = accumulator((0, 0), pairwise_sum)(folder_count, file_count)
-    assert not process(topdown, make_root('src'), default_get, act)
+    assert not topdown(make_root('src'), default_get)(act)
 
 
 def pairwise_add(t1, t2):
@@ -70,4 +70,4 @@ def pairwise_add(t1, t2):
 def test_count_mutable():
     root = make_root('src')
     act = accumulator([0, 0], pairwise_add)(folder_count, file_count)
-    assert not process(topdown, make_root('src'), default_get, act)
+    assert not topdown(make_root('src'), default_get)(act)
