@@ -34,20 +34,6 @@ class rejected:
 rejected = rejected()
 
 
-def _process_one(node, traversal, act, accumulator):
-    use_accumulator = (accumulator[0] is not rejected)
-    result = act(node, accumulator[0]) if use_accumulator else act(node)
-    if result is not rejected and use_accumulator:
-        accumulator[0] = result
-    return traversal.send(result)
-
-
-def _dispatch(process_folder, process_file):
-    def _act(node, *args):
-        return (process_folder if node.internal else process_file)(node, *args)
-    return _act
-
-
 def _normalize_act(act):
     try:
         process_folder, process_file = act
@@ -56,21 +42,21 @@ def _normalize_act(act):
         # callables, that `ValueError` should propagate.
         return act
     else:
-        return _dispatch(process_folder, process_file)
+        return lambda n: (process_folder if n.internal else process_file)(n)
 
 
-def _process(traversal, act, accumulator):
-    traversal = iter(traversal)
+def _process(traversal, act):
     node, act = next(traversal), _normalize_act(act)
     while True:
+        result = act(node)
         try:
-            node = _process_one(node, traversal, act, accumulator)
+            node = traversal.send(result)
         except StopIteration:
-            return accumulator[0]
+            return result
 
 
-def process(traverse, root, get_children, act, initial=rejected):
-    return _process(traverse(root, get_children), act, [initial])
+def process(traverse, root, get_children, act):
+    return _process(iter(traverse(root, get_children)), act)
 
 
 class Traversal:
@@ -83,7 +69,7 @@ class Traversal:
 
 
     def __call__(self, act, initial=rejected):
-        return _process(iter(self), act, [initial])
+        return _process(iter(self), act)
 
 
 def traversal(func):

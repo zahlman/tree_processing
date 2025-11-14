@@ -2,7 +2,7 @@ from tree_processing.actions.filesystem import fake_propagate_folders, fake_copy
 from tree_processing.node_getters.filesystem import default_get, make_root
 from tree_processing.traversal import topdown
 from tree_processing.actions import Node
-from tree_processing import process
+from tree_processing import process, accumulator
 
 from os import chdir, getcwd, mkdir
 from pathlib import Path
@@ -43,33 +43,31 @@ def test_naive_iterate(tmpdir, setup):
     assert False
 
 
-def incremented_folders(f, counter):
-    folders, files = counter
-    return (folders + 1, files)
+def folder_count(f):
+    return (1, 0)
 
 
-def incremented_files(f, counter):
-    folders, files = counter
-    return (folders, files + 1)
+def file_count(f):
+    return (0, 1)
+
+
+def pairwise_sum(t1, t2):
+    return (t1[0] + t2[0], t1[1] + t2[1])
 
 
 def test_count_immutable():
     root = make_root('src')
-    act = (incremented_folders, incremented_files)
-    assert not process(topdown, make_root('src'), default_get, act, (0, 0))
+    act = accumulator((0, 0), pairwise_sum)(folder_count, file_count)
+    assert not process(topdown, make_root('src'), default_get, act)
 
 
-def increment_folders(f, counter):
-    counter[0] += 1
-    return counter
-
-
-def increment_files(f, counter):
-    counter[1] += 1
-    return counter
+def pairwise_add(t1, t2):
+    t1[0] += t2[0]
+    t1[1] += t2[1]
+    return t1
 
 
 def test_count_mutable():
     root = make_root('src')
-    act = (increment_folders, increment_files)
-    assert not process(topdown, make_root('src'), default_get, act, [0, 0])
+    act = accumulator([0, 0], pairwise_add)(folder_count, file_count)
+    assert not process(topdown, make_root('src'), default_get, act)
