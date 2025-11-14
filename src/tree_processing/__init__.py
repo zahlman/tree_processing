@@ -123,6 +123,6 @@ def accumulator(initial, accumulate):
             initial = accumulate(initial, result)
             if initial is rejected:
                 raise NodeError("accumulator returned `rejected`")
-            return result
+            return initial
         return _wrapped
     return _wrapper
