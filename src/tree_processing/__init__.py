@@ -1,3 +1,6 @@
+from functools import partial, wraps
+
+
 class rejected:
     """A special value used to indicate that a node was "rejected"
     during the processing of a tree.
@@ -33,8 +36,20 @@ def _process_one(node, traversal, act, accumulator):
     return traversal.send(result)
 
 
+def _normalize_act(act):
+    try:
+        process_folder, process_file = act
+    except TypeError: # not iterable
+        # If an iterable is provided but it has the wrong number of
+        # callables, that `ValueError` should propagate.
+        return act, act
+    else:
+        return act
+
+
 def _process(traversal, act, accumulator):
-    node = next(traversal)
+    traversal = iter(traversal)
+    node, act = next(traversal), _normalize_act(act)
     while True:
         try:
             node = _process_one(node, traversal, act, accumulator)
@@ -43,11 +58,22 @@ def _process(traversal, act, accumulator):
 
 
 def process(traverse, root, get_children, act, initial=rejected):
-    traversal = traverse(root, get_children)
-    try:
-        process_folder, process_file = act
-    except TypeError: # not iterable
-        # If an iterable is provided but it has the wrong number of
-        # callables, that `ValueError` should propagate.
-        act = act, act
-    return _process(traversal, act, [initial])
+    return _process(traverse(root, get_children), act, [initial])
+
+
+class Traversal:
+    def __init__(self, traverse, root, get_children):
+        self._traverse, self._root, self._get = traverse, root, get_children
+
+
+    def __iter__(self):
+        yield from self._traverse(self._root, self._get)
+
+
+    def __call__(self, act, initial=rejected):
+        return _process(iter(self), act, [initial])
+
+
+def traversal(func):
+    """Converts traversal generators into `Traversal` constructors."""
+    return wraps(func)(partial(Traversal, func))

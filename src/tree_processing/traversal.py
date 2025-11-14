@@ -1,5 +1,5 @@
 from .actions import Node
-from . import rejected
+from . import rejected, traversal
 
 
 def _reorder(children, stack):
@@ -14,6 +14,7 @@ def _reorder(children, stack):
             stack.append(c)
 
 
+@traversal
 def topdown(root, get_children):
     root_node = Node(True, None, root, None)
     # FIXME: The root node should get included, but in order for it to be
