@@ -34,10 +34,11 @@ for (path, dirnames, filenames) in os.walk(x):
 Use `tree_processing`, and write code like this instead:
 
 ```
-traversal = topdown(make_root(x, y), get=folders_and_files.which(~filter_path))
+traversal = topdown(make_root(x, y), folders_and_files.which(~filter_path))
 process_folder = recurse_into_folders.which(valid_foldername)
-process_file = append_to_list(compare_files.which(valid_filename))
-results = traversal(process_folder, process_file, initial=[])
+process_file = compare_files.which(valid_filename)
+accumulate = accumulator([], append_not_none)
+results = traversal(accumulate(process_folder, process_file))
 ```
 
 And use the same tools to process tree data structures in your code, too.
@@ -73,7 +74,7 @@ from tree_processing.actions.filesystem import copy_files, propagate_folders
 from tree_processing.node_getters.filesystem import default_get, make_root
 
 def copy_tree(src, dst):
-    topdown(make_root(src, dst), get=default_get)(propagate_folders, copy_files)
+    topdown(make_root(src, dst), default_get)(propagate_folders, copy_files)
 ```
 
 List non-hidden files in non-hidden folders:
@@ -89,7 +90,7 @@ def display_files(node):
 
 def print_visible_files(src):
     # When a single action is passed, it's used for both files and folders.
-    topdown(make_root(src), get=default_get.which(~hidden))(display_files)
+    topdown(make_root(src), default_get.which(~hidden))(display_files)
 ```
 
 Count lines in all files (assuming only directories and regular files):
@@ -98,20 +99,19 @@ Count lines in all files (assuming only directories and regular files):
 from tree_processing.traversal import topdown
 from tree_processing.node_getters.filesystem import default_get, make_root
 
-# When an `initial` value is passed, the action receives an `accumulator`
-# which is initialized to `initial` and carries forward the value from
-# previous nodes.
-def add_lines(node, accumulator):
+# The `accumulator` decorator lets the action accumulate results across nodes.
+@accumulator(0, add)
+def add_lines(node):
     if node.internal:
-        return accumulator # skip folders
+        return 0 # skip folders
     file_path = node.current
     # The built-in traversals provide pathlib.Path objects.
     assert file_path.is_file()
     with open(file_path) as f:
-        return accumulator + sum(1 for _ in f)
+        return sum(1 for _ in f)
 
 def count_all_lines(src):
-    return topdown(make_root(src), get=default_get)(add_lines, initial=0)
+    return topdown(make_root(src), default_get)(add_lines)
 ```
 
 ----

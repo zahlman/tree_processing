@@ -1,9 +1,10 @@
-from tree_processing.actions.filesystem import fake_propagate_folders, fake_copy_regular_files, not_hidden
+from tree_processing.actions.filesystem import fake_propagate_folders, fake_copy_regular_files, not_hidden, copy_files, propagate_folders
 from tree_processing.node_getters.filesystem import default_get, make_root
 from tree_processing.traversal import topdown
 from tree_processing.actions import Node
 from tree_processing import process, accumulator
 
+from operator import add
 from os import chdir, getcwd, mkdir
 from pathlib import Path
 try:
@@ -78,3 +79,41 @@ def test_count_mutable(expected):
     result = topdown(make_root('.'), default_get)(act)
     assert isinstance(result, list)
     assert result == expected['count']
+
+
+def test_copy_tree(expected):
+    # TODO get a unique name for the dest folder, to make separate
+    # copies for each input test case.
+    topdown(make_root('.', '../copy'), default_get)(propagate_folders, copy_files)
+    # check the destination tree contents.
+    # The TOML should have some explicit manifest of them.
+
+
+def _display_files(node):
+    if not node.internal:
+        print(f'{node.current}')
+
+
+# TODO: make `~hidden` work.
+# TODO: make `default_get` filterable with `.which`.
+def test_print_visible_files(expected):
+    # When a single action is passed, it's used for both files and folders.
+    topdown(make_root('.'), default_get)(_display_files)
+    assert False # inspect output manually for now
+
+
+# The `accumulator` decorator lets the action accumulate results across nodes.
+@accumulator(0, add)
+def _add_lines(node):
+    if node.internal:
+        return 0 # skip folders
+    file_path = node.current
+    # The built-in traversals provide pathlib.Path objects.
+    assert file_path.is_file()
+    with open(file_path) as f:
+        return sum(1 for _ in f)
+
+
+def test_count_all_lines(expected):
+    print(topdown(make_root('.'), default_get)(_add_lines))
+    assert False
