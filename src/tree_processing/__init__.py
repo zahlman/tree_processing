@@ -102,16 +102,17 @@ def accumulator(initial, accumulate):
         raise ValueError("cannot initialize accumulator with `rejected`")
     def _wrapper(*args):
         act = _normalize_act(args)
+        accumulated = initial
         @wraps(act)
         def _wrapped(node):
-            nonlocal initial
+            nonlocal accumulated
             result = act(node)
             if result is rejected:
                 return rejected
-            initial = accumulate(initial, result)
+            accumulated = accumulate(accumulated, result)
             if initial is rejected:
                 raise NodeError("accumulator returned `rejected`")
-            return initial
+            return accumulated
         return _wrapped
     return _wrapper
 

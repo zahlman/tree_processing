@@ -101,8 +101,6 @@ def test_print_visible_files(expected):
     assert False # inspect output manually for now
 
 
-# The `accumulator` decorator lets the action accumulate results across nodes.
-@sum_results
 def _add_lines(node):
     if node.internal:
         return 0 # skip folders
@@ -113,9 +111,22 @@ def _add_lines(node):
         return sum(1 for _ in f)
 
 
+@sum_results
+def _add_lines_decorated(node):
+    return _add_lines(node)
+
+
 def test_count_lines_unified(expected):
-    result = topdown(make_root('.'), default_get)(_add_lines)
-    assert result == expected['line_count']
+    for i in range(2): # to ensure resetting
+        result = topdown(make_root('.'), default_get)(sum_results(_add_lines))
+        assert result == expected['line_count']
+
+
+def test_count_lines_noreset(expected):
+    for i in (1, 2): # to ensure no resetting
+        result = topdown(make_root('.'), default_get)(_add_lines_decorated)
+        assert result == expected['line_count'] * i
+
 
 
 def _folder_lines(node):
@@ -128,7 +139,7 @@ def _file_lines(node):
 
 
 def test_count_lines_separate(expected):
-    # The decorator can also be applied to a pair of callables:
-    process = sum_results(_folder_lines, _file_lines)
-    result = topdown(make_root('.'), default_get)(process)
-    assert result == expected['line_count']
+    for i in range(2): # to ensure resetting
+        process = sum_results(_folder_lines, _file_lines)
+        result = topdown(make_root('.'), default_get)(process)
+        assert result == expected['line_count']
