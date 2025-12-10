@@ -114,8 +114,8 @@ def _add_lines(node):
 
 
 def test_count_lines_unified(expected):
-    print(topdown(make_root('.'), default_get)(_add_lines))
-    assert False
+    result = topdown(make_root('.'), default_get)(_add_lines)
+    assert result == expected['line_count']
 
 
 def _folder_lines(node):
@@ -130,5 +130,5 @@ def _file_lines(node):
 def test_count_lines_separate(expected):
     # The decorator can also be applied to a pair of callables:
     process = sum_results(_folder_lines, _file_lines)
-    print(topdown(make_root('.'), default_get)(process))
-    assert False
+    result = topdown(make_root('.'), default_get)(process)
+    assert result == expected['line_count']
