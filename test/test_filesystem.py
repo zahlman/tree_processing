@@ -2,9 +2,8 @@ from tree_processing.actions.filesystem import fake_propagate_folders, fake_copy
 from tree_processing.node_getters.filesystem import default_get, make_root
 from tree_processing.traversal import topdown
 from tree_processing.actions import Node
-from tree_processing import process, accumulator
+from tree_processing import accumulator, process, sum_results
 
-from operator import add
 from os import chdir, getcwd, mkdir
 from pathlib import Path
 try:
@@ -103,7 +102,7 @@ def test_print_visible_files(expected):
 
 
 # The `accumulator` decorator lets the action accumulate results across nodes.
-@accumulator(0, add)
+@sum_results
 def _add_lines(node):
     if node.internal:
         return 0 # skip folders
@@ -130,6 +129,6 @@ def _file_lines(node):
 
 def test_count_lines_separate(expected):
     # The decorator can also be applied to a pair of callables:
-    process = accumulator(0, add)(_folder_lines, _file_lines)
+    process = sum_results(_folder_lines, _file_lines)
     print(topdown(make_root('.'), default_get)(process))
     assert False

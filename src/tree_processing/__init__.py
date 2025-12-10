@@ -1,4 +1,5 @@
 from functools import partial, wraps
+from operator import add
 
 
 class NodeError(ValueError):
@@ -79,7 +80,7 @@ def traversal(func):
 
 
 def accumulator(initial, accumulate):
-    """Converts non-accumulating actions (or action-pairs) to accumulate.
+    """Decorator for accumulating results from actions (or action-pairs).
 
     An internal accumulator is initialized at the start of the traversal,
     and updated each time the action is applied to a node. (Note: if this is
@@ -113,3 +114,16 @@ def accumulator(initial, accumulate):
             return initial
         return _wrapped
     return _wrapper
+
+
+# The most common case of accumulation.
+sum_results = accumulator(0, add)
+sum_results.__qualname__ = sum_results.__name__ = 'sum_results'
+sum_results.__doc__ = """\
+Sums the results of actions applied at each node.
+
+Equivalent to using `accumulator(0, add)`.
+
+args -> a single action applied to all nodes, or a pair of actions where
+        the first is applied to internal nodes and the second to leaves.
+"""
