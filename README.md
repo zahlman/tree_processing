@@ -96,6 +96,9 @@ def print_visible_files(src):
 Count lines in all files (assuming only directories and regular files):
 
 ```
+from operator import add
+
+from tree_processing import accumulator
 from tree_processing.traversal import topdown
 from tree_processing.node_getters.filesystem import default_get, make_root
 
@@ -112,6 +115,29 @@ def add_lines(node):
 
 def count_all_lines(src):
     return topdown(make_root(src), default_get)(add_lines)
+```
+
+Or using separate file and folder handlers:
+
+```
+from operator import add
+
+from tree_processing import accumulator
+from tree_processing.traversal import topdown
+from tree_processing.node_getters.filesystem import default_get, make_root
+
+# We process folders as contributing 0 lines.
+def folder_lines(node):
+    return 0
+
+def file_lines(node):
+    with open(node.current) as f:
+        return sum(1 for _ in f)
+
+def count_all_lines(src):
+    # The decorator can also be applied to a pair of callables:
+    process = accumulate(0, add)(folder_lines, file_lines)
+    return topdown(make_root(src), default_get)(process)
 ```
 
 ----

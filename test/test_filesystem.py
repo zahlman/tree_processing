@@ -114,6 +114,22 @@ def _add_lines(node):
         return sum(1 for _ in f)
 
 
-def test_count_all_lines(expected):
+def test_count_lines_unified(expected):
     print(topdown(make_root('.'), default_get)(_add_lines))
+    assert False
+
+
+def _folder_lines(node):
+    return 0
+
+
+def _file_lines(node):
+    with open(node.current) as f:
+        return sum(1 for _ in f)
+
+
+def test_count_lines_separate(expected):
+    # The decorator can also be applied to a pair of callables:
+    process = accumulator(0, add)(_folder_lines, _file_lines)
+    print(topdown(make_root('.'), default_get)(process))
     assert False
