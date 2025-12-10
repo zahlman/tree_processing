@@ -4,6 +4,7 @@ from tree_processing.traversal import topdown
 from tree_processing.actions import Node
 from tree_processing import accumulator, process, sum_results
 
+from operator import mul
 from os import chdir, getcwd, mkdir
 from pathlib import Path
 try:
@@ -128,18 +129,16 @@ def test_count_lines_noreset(expected):
         assert result == expected['line_count'] * i
 
 
-
-def _folder_lines(node):
-    return 0
-
-
-def _file_lines(node):
-    with open(node.current) as f:
-        return sum(1 for _ in f)
+def _multiplicative_identity(node):
+    return 1
 
 
-def test_count_lines_separate(expected):
-    for i in range(2): # to ensure resetting
-        process = sum_results(_folder_lines, _file_lines)
-        result = topdown(make_root('.'), default_get)(process)
-        assert result == expected['line_count']
+def _file_name_length(node):
+    return len(node.name)
+
+
+def test_file_name_length_product(expected):
+    # We don't need to re-test that resetting works with custom accumulators.
+    process = accumulator(1, mul)(_multiplicative_identity, _file_name_length)
+    result = topdown(make_root('.'), default_get)(process)
+    assert result == expected['filename_length_product']

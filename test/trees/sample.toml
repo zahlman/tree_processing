@@ -21,3 +21,4 @@ mirror nested_folder_2/nested_folder_3/file_y -> /tmp/nested_folder_2/nested_fol
 """
 count = [4, 4]
 line_count = 8
+filename_length_product = 2592
