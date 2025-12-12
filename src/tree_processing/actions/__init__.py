@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Any, Callable, NamedTuple, NewType, Self
+from typing import Any, Callable, NamedTuple, NewType
 
 from .. import NodeError, rejected
 
@@ -19,7 +19,7 @@ Filter = NewType('Filter', Callable[[Node], bool])
 
 
 class _filter_chain(tuple):
-    def __and__(self, another: Filter | Self):
+    def __and__(self, another):
         # Attempt to "flatten" concatenated chains.
         # Chains are callable (and in fact Filters), so it's not a real
         # problem if this fails.
