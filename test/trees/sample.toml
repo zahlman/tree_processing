@@ -5,9 +5,9 @@ Would copy example_file to /tmp/example_file
 Would create folder /tmp/nested_folder_1 if missing
 Would create folder /tmp/nested_folder_2 if missing
 Would create folder /tmp/nested_folder_2/nested_folder_3 if missing
-Would copy nested_folder_2/nested_folder_3/file_z to /tmp/nested_folder_2/nested_folder_3/file_z
 Would copy nested_folder_2/nested_folder_3/file_x to /tmp/nested_folder_2/nested_folder_3/file_x
 Would copy nested_folder_2/nested_folder_3/file_y to /tmp/nested_folder_2/nested_folder_3/file_y
+Would copy nested_folder_2/nested_folder_3/file_z to /tmp/nested_folder_2/nested_folder_3/file_z
 """
 naive_iterate = """\
 mirror . -> /tmp
@@ -15,15 +15,15 @@ mirror example_file -> /tmp/example_file
 mirror nested_folder_1 -> /tmp/nested_folder_1
 mirror nested_folder_2 -> /tmp/nested_folder_2
 mirror nested_folder_2/nested_folder_3 -> /tmp/nested_folder_2/nested_folder_3
-mirror nested_folder_2/nested_folder_3/file_z -> /tmp/nested_folder_2/nested_folder_3/file_z
 mirror nested_folder_2/nested_folder_3/file_x -> /tmp/nested_folder_2/nested_folder_3/file_x
 mirror nested_folder_2/nested_folder_3/file_y -> /tmp/nested_folder_2/nested_folder_3/file_y
+mirror nested_folder_2/nested_folder_3/file_z -> /tmp/nested_folder_2/nested_folder_3/file_z
 """
 listing = """\
 example_file
-nested_folder_2/nested_folder_3/file_z
 nested_folder_2/nested_folder_3/file_x
 nested_folder_2/nested_folder_3/file_y
+nested_folder_2/nested_folder_3/file_z
 """
 count = [4, 4]
 line_count = 8

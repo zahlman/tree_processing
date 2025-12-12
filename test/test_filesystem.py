@@ -1,5 +1,6 @@
 from tree_processing.actions.filesystem import fake_propagate_folders, fake_copy_regular_files, not_hidden, copy_files, propagate_folders
-from tree_processing.node_getters.filesystem import default_get, make_root
+from tree_processing.node_getters import make_getter
+from tree_processing.node_getters.filesystem import default_get, make_root, raw_get, make_node
 from tree_processing.traversal import topdown
 from tree_processing.actions import Node
 from tree_processing import accumulator, process, sum_results
@@ -33,6 +34,11 @@ def expected(tmpdir, request):
     chdir(old)
 
 
+def _sorted_get(node):
+    yield from sorted(raw_get(node), key = lambda dirent: dirent.name)
+_sorted_get = make_getter(_sorted_get, make_node)
+
+
 def _check_out(capsys, expected, name):
     captured = capsys.readouterr()
     assert not captured.err
@@ -43,13 +49,15 @@ def test_fake_copy(expected, capsys):
     root = make_root('.', '/tmp')
     process_folder = fake_propagate_folders.which(not_hidden)
     process_file = fake_copy_regular_files.which(not_hidden)
-    topdown(root, default_get)(process_folder, process_file)
+    # Use the sorted get so output is in a consistent order.
+    topdown(root, _sorted_get)(process_folder, process_file)
     _check_out(capsys, expected, 'fake_copy')
 
 
 def test_naive_iterate(expected, capsys):
     root = make_root('.', '/tmp')
-    for node in topdown(root, default_get):
+    # Use the sorted get so output is in a consistent order.
+    for node in topdown(root, _sorted_get):
         src, dst = node.current
         print(f"mirror {src} -> {dst}")
     _check_out(capsys, expected, 'naive_iterate')
@@ -104,7 +112,8 @@ def _display_files(node):
 # TODO: make `default_get` filterable with `.which`.
 def test_print_visible_files(capsys, expected):
     # When a single action is passed, it's used for both files and folders.
-    topdown(make_root('.'), default_get)(_display_files)
+    # Use the sorted get so output is in a consistent order.
+    topdown(make_root('.'), _sorted_get)(_display_files)
     _check_out(capsys, expected, 'listing')
 
 
