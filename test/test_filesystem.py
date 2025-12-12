@@ -33,12 +33,18 @@ def expected(tmpdir, request):
     chdir(old)
 
 
+def _check_out(capsys, expected, name):
+    captured = capsys.readouterr()
+    assert not captured.err
+    assert captured.out == expected[name]
+
+
 def test_fake_copy(expected, capsys):
     root = make_root('.', '/tmp')
     process_folder = fake_propagate_folders.which(not_hidden)
     process_file = fake_copy_regular_files.which(not_hidden)
     topdown(root, default_get)(process_folder, process_file)
-    assert capsys.readouterr().out == expected['fake_copy']
+    _check_out(capsys, expected, 'fake_copy')
 
 
 def test_naive_iterate(expected, capsys):
@@ -46,7 +52,7 @@ def test_naive_iterate(expected, capsys):
     for node in topdown(root, default_get):
         src, dst = node.current
         print(f"mirror {src} -> {dst}")
-    assert capsys.readouterr().out == expected['naive_iterate']
+    _check_out(capsys, expected, 'naive_iterate')
 
 
 def folder_count(f):
@@ -99,7 +105,7 @@ def _display_files(node):
 def test_print_visible_files(capsys, expected):
     # When a single action is passed, it's used for both files and folders.
     topdown(make_root('.'), default_get)(_display_files)
-    assert capsys.readouterr().out == expected['listing']
+    _check_out(capsys, expected, 'listing')
 
 
 def _add_lines(node):
