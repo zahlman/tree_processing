@@ -1,9 +1,8 @@
 from tree_processing.actions.filesystem import copy_files, not_hidden, propagate_folders, src_is_regular_file
-from tree_processing.node_getters import make_getter
-from tree_processing.node_getters.filesystem import default_get, make_root, raw_get, make_node
-from tree_processing.traversal import topdown
-from tree_processing.actions import Node, filterable
-from tree_processing import accumulator, process, sum_results
+from tree_processing.node_getters.filesystem import raw_get
+from tree_processing.filesystem import topdown
+from tree_processing.actions import filterable
+from tree_processing import accumulator, sum_results
 
 from operator import mul
 from os import chdir, getcwd, mkdir
@@ -36,7 +35,6 @@ def expected(tmpdir, request):
 
 def _sorted_get(node):
     yield from sorted(raw_get(node), key = lambda dirent: dirent.name)
-_sorted_get = make_getter(_sorted_get, make_node)
 
 
 def _check_out(capsys, expected, name):
@@ -61,19 +59,17 @@ def _fake_propagate_folders(node):
 
 
 def test_fake_copy(expected, capsys):
-    root = make_root('.', '/tmp')
     fake_copy_regular_files = _fake_copy.which(src_is_regular_file)
     process_folder = _fake_propagate_folders.which(not_hidden)
     process_file = fake_copy_regular_files.which(not_hidden)
     # Use the sorted get so output is in a consistent order.
-    topdown(root, _sorted_get)(process_folder, process_file)
+    topdown('.', '/tmp', raw_get=_sorted_get)(process_folder, process_file)
     _check_out(capsys, expected, 'fake_copy')
 
 
 def test_naive_iterate(expected, capsys):
-    root = make_root('.', '/tmp')
     # Use the sorted get so output is in a consistent order.
-    for node in topdown(root, _sorted_get):
+    for node in topdown('.', '/tmp', raw_get=_sorted_get):
         src, dst = node.current
         print(f"mirror {src} -> {dst}")
     _check_out(capsys, expected, 'naive_iterate')
@@ -93,7 +89,7 @@ def pairwise_sum(t1, t2):
 
 def test_count_immutable(expected):
     act = accumulator((0, 0), pairwise_sum)(folder_count, file_count)
-    result = topdown(make_root('.'), default_get)(act)
+    result = topdown()(act)
     assert isinstance(result, tuple)
     assert result == tuple(expected['count'])
 
@@ -106,7 +102,7 @@ def pairwise_add(t1, t2):
 
 def test_count_mutable(expected):
     act = accumulator([0, 0], pairwise_add)(folder_count, file_count)
-    result = topdown(make_root('.'), default_get)(act)
+    result = topdown()(act)
     assert isinstance(result, list)
     assert result == expected['count']
 
@@ -114,7 +110,7 @@ def test_count_mutable(expected):
 def test_copy_tree(expected):
     # TODO get a unique name for the dest folder, to make separate
     # copies for each input test case.
-    topdown(make_root('.', '../copy'), default_get)(propagate_folders, copy_files)
+    topdown('.', '../copy')(propagate_folders, copy_files)
     # check the destination tree contents.
     # The TOML should have some explicit manifest of them.
 
@@ -125,11 +121,11 @@ def _display_files(node):
 
 
 # TODO: make `~hidden` work.
-# TODO: make `default_get` filterable with `.which`.
+# TODO: make `raw_get` filterable with `.which`.
 def test_print_visible_files(capsys, expected):
     # When a single action is passed, it's used for both files and folders.
     # Use the sorted get so output is in a consistent order.
-    topdown(make_root('.'), _sorted_get)(_display_files)
+    topdown(raw_get=_sorted_get)(_display_files)
     _check_out(capsys, expected, 'listing')
 
 
@@ -150,13 +146,13 @@ def _add_lines_decorated(node):
 
 def test_count_lines_unified(expected):
     for i in range(2): # to ensure resetting
-        result = topdown(make_root('.'), default_get)(sum_results(_add_lines))
+        result = topdown()(sum_results(_add_lines))
         assert result == expected['line_count']
 
 
 def test_count_lines_noreset(expected):
     for i in (1, 2): # to ensure no resetting
-        result = topdown(make_root('.'), default_get)(_add_lines_decorated)
+        result = topdown()(_add_lines_decorated)
         assert result == expected['line_count'] * i
 
 
@@ -171,5 +167,5 @@ def _file_name_length(node):
 def test_file_name_length_product(expected):
     # We don't need to re-test that resetting works with custom accumulators.
     process = accumulator(1, mul)(_multiplicative_identity, _file_name_length)
-    result = topdown(make_root('.'), default_get)(process)
+    result = topdown()(process)
     assert result == expected['filename_length_product']
