@@ -1,6 +1,7 @@
-from tree_processing.actions.filesystem import copy_files, not_hidden, propagate_folders, src_is_regular_file
-from tree_processing.node_getters.filesystem import raw_get
-from tree_processing.filesystem import topdown
+from tree_processing.filesystem import (
+    copy_files, not_hidden, propagate_folders,
+    raw_get, src_is_regular_file, topdown
+)
 from tree_processing.actions import filterable
 from tree_processing import accumulator, sum_results
 
@@ -156,16 +157,12 @@ def test_count_lines_noreset(expected):
         assert result == expected['line_count'] * i
 
 
-def _multiplicative_identity(node):
-    return 1
-
-
 def _file_name_length(node):
     return len(node.name)
 
 
 def test_file_name_length_product(expected):
     # We don't need to re-test that resetting works with custom accumulators.
-    process = accumulator(1, mul)(_multiplicative_identity, _file_name_length)
+    process = accumulator(1, mul)(lambda node: 1, _file_name_length)
     result = topdown()(process)
     assert result == expected['filename_length_product']
