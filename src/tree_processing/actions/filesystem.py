@@ -45,14 +45,6 @@ hardlink_or_copy_files = _mirror(hardlink_or_copy)
 copy_files = _mirror(copy)
 
 
-def _fake_copy(src, dst):
-    '''A helper for testing. Displays diagnostic messages.'''
-    print(f'Would copy {src} to {dst}')
-
-
-fake_copy_regular_files = _mirror(_fake_copy).which(src_is_regular_file)
-
-
 @filterable
 def propagate_folders(node: Node):
     '''A helper to create folders in the destination file tree
@@ -60,11 +52,3 @@ def propagate_folders(node: Node):
     src, dst = node.current
     assert src.is_dir()
     dst.mkdir(exist_ok=True)
-
-
-@filterable
-def fake_propagate_folders(node: Node):
-    '''A helper for testing. Displays diagnostic messages.'''
-    src, dst = node.current
-    assert src.is_dir()
-    print(f'Would create folder {dst} if missing')

@@ -1,8 +1,8 @@
-from tree_processing.actions.filesystem import fake_propagate_folders, fake_copy_regular_files, not_hidden, copy_files, propagate_folders
+from tree_processing.actions.filesystem import copy_files, not_hidden, propagate_folders, src_is_regular_file
 from tree_processing.node_getters import make_getter
 from tree_processing.node_getters.filesystem import default_get, make_root, raw_get, make_node
 from tree_processing.traversal import topdown
-from tree_processing.actions import Node
+from tree_processing.actions import Node, filterable
 from tree_processing import accumulator, process, sum_results
 
 from operator import mul
@@ -45,9 +45,25 @@ def _check_out(capsys, expected, name):
     assert captured.out == expected[name]
 
 
+@filterable
+def _fake_copy(node):
+    '''A helper for testing. Displays diagnostic messages.'''
+    src, dst = node.current
+    print(f'Would copy {src} to {dst}')
+
+
+@filterable
+def _fake_propagate_folders(node):
+    '''A helper for testing. Displays diagnostic messages.'''
+    src, dst = node.current
+    assert src.is_dir()
+    print(f'Would create folder {dst} if missing')
+
+
 def test_fake_copy(expected, capsys):
     root = make_root('.', '/tmp')
-    process_folder = fake_propagate_folders.which(not_hidden)
+    fake_copy_regular_files = _fake_copy.which(src_is_regular_file)
+    process_folder = _fake_propagate_folders.which(not_hidden)
     process_file = fake_copy_regular_files.which(not_hidden)
     # Use the sorted get so output is in a consistent order.
     topdown(root, _sorted_get)(process_folder, process_file)
