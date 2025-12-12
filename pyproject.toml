@@ -1,6 +1,6 @@
 [project]
 name = "tree_processing"
-version = "0.4.0"
+version = "0.4.1"
 description = "Elegant composition of tree-traversal algorithms"
 readme = "README.md"
 requires-python = ">=3.6"
