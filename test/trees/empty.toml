@@ -1,6 +1,7 @@
 [expected]
 fake_copy = "Would create folder /tmp if missing\n"
 naive_iterate = "mirror . -> /tmp\n"
+listing = ""
 count = [1, 0]
 line_count = 0
 filename_length_product = 1

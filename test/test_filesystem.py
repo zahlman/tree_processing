@@ -96,10 +96,10 @@ def _display_files(node):
 
 # TODO: make `~hidden` work.
 # TODO: make `default_get` filterable with `.which`.
-def test_print_visible_files(expected):
+def test_print_visible_files(capsys, expected):
     # When a single action is passed, it's used for both files and folders.
     topdown(make_root('.'), default_get)(_display_files)
-    assert False # inspect output manually for now
+    assert capsys.readouterr().out == expected['listing']
 
 
 def _add_lines(node):
