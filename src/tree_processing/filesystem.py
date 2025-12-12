@@ -1,6 +1,6 @@
 from .traversal import topdown as _topdown
 from .node_getters import make_getter as _make_getter
-from .node_getters.filesystem import make_node, make_root, raw_get
+from .node_getters.filesystem import default_get, make_node, make_root, raw_get
 from .actions.filesystem import *
 
 
