@@ -34,7 +34,7 @@ for (path, dirnames, filenames) in os.walk(x):
 Use `tree_processing`, and write code like this instead:
 
 ```
-traversal = topdown(make_root(x, y), folders_and_files.which(~filter_path))
+traversal = topdown(x, y, get=folders_and_files.which(~filter_path))
 process_folder = recurse_into_folders.which(valid_foldername)
 process_file = compare_files.which(valid_filename)
 accumulate = accumulator([], append_not_none)
@@ -69,20 +69,16 @@ Filtering is naturally a modification to other parts of the process, rather than
 Copy all files, folders and symlinks (like `shutil.copytree` with `symlinks=True` and `copy_function=shutil.copy`:
 
 ```
-from tree_processing.traversal import topdown
-from tree_processing.actions.filesystem import copy_files, propagate_folders
-from tree_processing.node_getters.filesystem import default_get, make_root
+from tree_processing.filesystem import copy_files, propagate_folders, topdown
 
 def copy_tree(src, dst):
-    topdown(make_root(src, dst), default_get)(propagate_folders, copy_files)
+    topdown(src, dst)(propagate_folders, copy_files)
 ```
 
 List non-hidden files in non-hidden folders:
 
 ```
-from tree_processing.traversal import topdown
-from tree_processing.actions.filesystem import hidden
-from tree_processing.node_getters.filesystem import default_get, make_root
+from tree_processing.filesystem import default_get, hidden, topdown
 
 def display_files(node):
     if not node.internal:
@@ -90,15 +86,14 @@ def display_files(node):
 
 def print_visible_files(src):
     # When a single action is passed, it's used for both files and folders.
-    topdown(make_root(src), default_get.which(~hidden))(display_files)
+    topdown(src, get=default_get.which(~hidden))(display_files)
 ```
 
 Count lines in all files (assuming only directories and regular files):
 
 ```
 from tree_processing import sum_results
-from tree_processing.traversal import topdown
-from tree_processing.node_getters.filesystem import default_get, make_root
+from tree_processing.filesystem import topdown
 
 def add_lines(node):
     if node.internal:
@@ -115,7 +110,7 @@ def add_lines(node):
 # traversals. Using it this way, the sum starts from 0 each time that
 # `count_all_lines` is called.
 def count_all_lines(src):
-    return topdown(make_root(src), default_get)(sum_results(add_lines))
+    return topdown(src)(sum_results(add_lines))
 ```
 
 Using separate file and folder handlers, the product of file name lengths:
@@ -124,19 +119,16 @@ Using separate file and folder handlers, the product of file name lengths:
 from operator import mul # to build a custom accumulator
 
 from tree_processing import accumulator
-from tree_processing.traversal import topdown
-from tree_processing.node_getters.filesystem import default_get, make_root
-
-def multiplicative_identity(node):
-    return 1
+from tree_processing.filesystem import topdown
 
 def file_name_length(node):
     return len(node.name)
 
 def file_name_length_product(src):
     # The decorator can also be applied to a pair of callables:
-    process = accumulator(1, mul)(multiplicative_identity, file_name_length)
-    return topdown(make_root(src), default_get)(process)
+    process = accumulator(1, mul)(lambda node: 1, file_name_length)
+    # (We return 1 for folders to leave the product unchanged.)
+    return topdown(src)(process)
 ```
 
 ----
