@@ -2,8 +2,7 @@ from tree_processing.filesystem import (
     copy_files, not_hidden, propagate_folders,
     raw_get, src_is_regular_file, topdown
 )
-from tree_processing.actions import filterable
-from tree_processing import accumulator, sum_results
+from tree_processing.actions import filterable, accumulator, sum_results
 
 from operator import mul
 from os import chdir, getcwd, mkdir

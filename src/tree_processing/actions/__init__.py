@@ -1,17 +1,9 @@
-from functools import partial
-from typing import Any, Callable, NamedTuple, NewType
+from functools import partial, wraps
+from operator import add
+from typing import Any, Callable, NewType
 
-from .. import NodeError, rejected
-
-
-class Node(NamedTuple):
-    '''Structure representing a node in a traversal.'''
-    internal: bool # whether the node may potentially have children.
-    name: Any # a relationship between the parent and current nodes.
-    current: Any # The current node in the traversal.
-    parent: Any # The parent of the current node in the traversal.
-    # N.B. For "mirroring" operations, `current` and `parent` could be
-    # (src, dst) tuples rather than single values.
+from ..node_getters import Node, NodeError
+from .. import rejected
 
 
 Action = NewType('Action', Callable[[Node], Any])
@@ -58,3 +50,67 @@ def require(f: Filter):
             raise NodeError 
         return True
     return wrapper
+
+
+# Shared with the traversal module. Could become public later.
+def _normalize_act(act):
+    try:
+        process_folder, process_file = act
+    except TypeError: # not iterable, so a single callable
+        return act
+    except ValueError: # a single callable, or else propagate the error
+        act, = act
+        return act
+    else: # create a simple dispatch for the two callables.
+        return lambda n: (process_folder if n.internal else process_file)(n)
+
+
+def accumulator(initial, accumulate):
+    """Decorator for accumulating results from actions (or action-pairs).
+
+    An internal accumulator is initialized at the start of the traversal,
+    and updated each time the action is applied to a node. (Note: if this is
+    done by modifying the accumulator's state, the `accumulate` function must
+    explicitly `return` the same object.) The update is skipped whenever the
+    action's result is `rejected`.
+
+    initial -> the initial state of the accumulator. Cannot be `rejected`.
+    accumulate(current, result) -> a function which updates the accumulator.
+        Given the `current` value of the accumulator and the `result` of
+        acting on the current node, returns an updated result (may or may
+        not be the same object as before). May not return `rejected`.
+
+    This can be used to decorate any callable used as an action (applied to
+    all nodes), or called with a pair of functions (applied to internal and
+    leaf nodes respectively).
+    """
+    if initial is rejected:
+        raise ValueError("cannot initialize accumulator with `rejected`")
+    def _wrapper(*args):
+        act = _normalize_act(args)
+        accumulated = initial
+        @wraps(act)
+        def _wrapped(node):
+            nonlocal accumulated
+            result = act(node)
+            if result is rejected:
+                return rejected
+            accumulated = accumulate(accumulated, result)
+            if initial is rejected:
+                raise NodeError("accumulator returned `rejected`")
+            return accumulated
+        return _wrapped
+    return _wrapper
+
+
+# The most common case of accumulation.
+sum_results = accumulator(0, add)
+sum_results.__qualname__ = sum_results.__name__ = 'sum_results'
+sum_results.__doc__ = """\
+Sums the results of actions applied at each node.
+
+Equivalent to using `accumulator(0, add)`.
+
+args -> a single action applied to all nodes, or a pair of actions where
+        the first is applied to internal nodes and the second to leaves.
+"""

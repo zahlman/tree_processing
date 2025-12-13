@@ -1,5 +1,50 @@
-from .actions import Node
-from . import rejected, traversal
+from functools import partial, wraps
+
+from . import rejected
+from .actions import _normalize_act
+
+def _normalize_act(act):
+    try:
+        process_folder, process_file = act
+    except TypeError: # not iterable, so a single callable
+        return act
+    except ValueError: # a single callable, or else propagate the error
+        act, = act
+        return act
+    else: # create a simple dispatch for the two callables.
+        return lambda n: (process_folder if n.internal else process_file)(n)
+
+
+def _process(traversal, act):
+    node, act = next(traversal), _normalize_act(act)
+    while True:
+        result = act(node)
+        try:
+            node = traversal.send(result)
+        except StopIteration:
+            return result
+
+
+def process(traverse, root, get_children, act):
+    return _process(iter(traverse(root, get_children)), act)
+
+
+class Traversal:
+    def __init__(self, traverse, root, get_children):
+        self._traverse, self._root, self._get = traverse, root, get_children
+
+
+    def __iter__(self):
+        yield from self._traverse(self._root, self._get)
+
+
+    def __call__(self, *act):
+        return _process(iter(self), act)
+
+
+def traversal(func):
+    """Converts traversal generators into `Traversal` constructors."""
+    return wraps(func)(partial(Traversal, func))
 
 
 def _recurse_over(children, stack):

@@ -1,6 +1,7 @@
 from os import link
 from shutil import copy
-from . import chainable, filterable, Node
+from . import chainable, filterable
+from ..node_getters import Node
 
 
 @chainable
