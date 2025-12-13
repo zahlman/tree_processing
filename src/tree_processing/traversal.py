@@ -3,17 +3,6 @@ from functools import partial, wraps
 from . import rejected
 from .actions import _normalize_act
 
-def _normalize_act(act):
-    try:
-        process_folder, process_file = act
-    except TypeError: # not iterable, so a single callable
-        return act
-    except ValueError: # a single callable, or else propagate the error
-        act, = act
-        return act
-    else: # create a simple dispatch for the two callables.
-        return lambda n: (process_folder if n.internal else process_file)(n)
-
 
 def _process(traversal, act):
     node, act = next(traversal), _normalize_act(act)

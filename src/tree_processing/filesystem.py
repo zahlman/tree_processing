@@ -5,7 +5,7 @@ from .actions.filesystem import *
 
 
 def topdown(
-    raw_src='.', raw_dst=None, *, 
+    raw_src='.', raw_dst=None, *,
     get=None, raw_get=raw_get, make_node=make_node
 ):
     if get is None:

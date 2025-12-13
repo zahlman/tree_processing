@@ -47,7 +47,7 @@ def filterable(func: Action):
 def require(f: Filter):
     def wrapper(node: Node):
         if not f(node):
-            raise NodeError 
+            raise NodeError
         return True
     return wrapper
 
