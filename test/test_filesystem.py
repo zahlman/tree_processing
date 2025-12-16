@@ -33,10 +33,6 @@ def expected(tmpdir, request):
     chdir(old)
 
 
-def _sorted_get(node):
-    yield from sorted(raw_get(node), key = lambda dirent: dirent.name)
-
-
 def _check_out(capsys, expected, name):
     captured = capsys.readouterr()
     assert not captured.err
@@ -63,13 +59,13 @@ def test_fake_copy(expected, capsys):
     process_folder = _fake_propagate_folders.which(not_hidden)
     process_file = fake_copy_regular_files.which(not_hidden)
     # Use the sorted get so output is in a consistent order.
-    topdown('.', '/tmp', raw_get=_sorted_get)(process_folder, process_file)
+    topdown('.', '/tmp', sort_key=lambda n: n.name)(process_folder, process_file)
     _check_out(capsys, expected, 'fake_copy')
 
 
 def test_naive_iterate(expected, capsys):
     # Use the sorted get so output is in a consistent order.
-    for node in topdown('.', '/tmp', raw_get=_sorted_get):
+    for node in topdown('.', '/tmp', sort_key=lambda n: n.name):
         src, dst = node.current
         print(f"mirror {src} -> {dst}")
     _check_out(capsys, expected, 'naive_iterate')
@@ -125,7 +121,7 @@ def _display_files(node):
 def test_print_visible_files(capsys, expected):
     # When a single action is passed, it's used for both files and folders.
     # Use the sorted get so output is in a consistent order.
-    topdown(raw_get=_sorted_get)(_display_files)
+    topdown(sort_key=lambda n: n.name)(_display_files)
     _check_out(capsys, expected, 'listing')
 
 

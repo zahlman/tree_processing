@@ -6,8 +6,8 @@ from .actions.filesystem import *
 
 def topdown(
     raw_src='.', raw_dst=None, *,
-    get=None, raw_get=raw_get, make_node=make_node
+    get=None, raw_get=raw_get, make_node=make_node, sort_key=None
 ):
     if get is None:
         get = _make_getter(raw_get, make_node)
-    return _topdown(make_root(raw_src, raw_dst), get)
+    return _topdown(make_root(raw_src, raw_dst), get, sort_key=sort_key)
