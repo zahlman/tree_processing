@@ -47,28 +47,32 @@ def _partition(children):
     return internal_nodes, leaves
 
 
-def _recurse_over(children, stack, sort_key):
+def _organize(children, sort_key):
     to_push, leaves = _partition(children)
-    if sort_key is None:
-        # The first internal node should go on the stack last, so that it will
-        # be processed first. But children should be iterated in order,
-        # because they're being yielded directly.
-        # (We must use a stack in order to have a depth-first traversal.)
-        for leaf in leaves:
-            yield leaf # can't use `yield from`; need to swallow `send` values
-        stack.extend(to_push[::-1])
-    else:
-        # Similarly, when the nodes are sorted, the internal nodes need to be
-        # sorted in reverse order.
-        for leaf in sorted(leaves, key=sort_key):
-            yield leaf
-        stack.extend(sorted(to_push, key=sort_key, reverse=True))
+    if sort_key is not None:
+        leaves.sort(key=sort_key)
+        # When a sort key is provided, we must be careful about the order of
+        # internal nodes. The first node in `to_push` will be pushed (or
+        # queued) first, meaning it will be processed *last*. Therefore we
+        # must reverse the list as well during sorting.
+        to_push.sort(key=sort_key, reverse=True)
+    return to_push, leaves
+
+
+def _topdown_step(top, get_children, sort_key, enqueue):
+    if (yield top) is rejected:
+        return
+    to_push, leaves = _organize(get_children(top), sort_key)
+    # We can't use `yield from` here, because the caller may use
+    # `.send` which the list iterator doesn't support.
+    for leaf in leaves:
+        yield leaf
+    enqueue(to_push)
 
 
 @traversal
 def topdown(root_node, get_children, sort_key=None):
     stack = [root_node]
     while stack:
-        top = stack.pop()
-        if (yield top) is not rejected:
-            yield from _recurse_over(get_children(top), stack, sort_key)
+        top, enqueue = stack.pop(), stack.extend
+        yield from _topdown_step(top, get_children, sort_key, enqueue)
