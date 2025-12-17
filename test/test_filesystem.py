@@ -20,7 +20,7 @@ parametrize = mark.parametrize
 TREE_DIR = Path(__file__).parent / 'trees'
 
 
-@fixture(params=('empty', 'sample'))
+@fixture(params=('empty', 'sample', 'sample_flipped'))
 def expected(tmpdir, request):
     old = getcwd()
     # Unzip a sample file hierarchy directly into the tmpdir.
@@ -143,11 +143,6 @@ def _add_lines(node):
         return sum(1 for _ in f)
 
 
-@sum_results
-def _add_lines_decorated(node):
-    return _add_lines(node)
-
-
 def test_count_lines_unified(expected):
     for i in range(2): # to ensure resetting
         result = topdown()(sum_results(_add_lines))
@@ -155,6 +150,9 @@ def test_count_lines_unified(expected):
 
 
 def test_count_lines_noreset(expected):
+    # Don't use actual decorator syntax here, because we *do* need to reset
+    # *between test cases*.
+    _add_lines_decorated = sum_results(_add_lines)
     for i in (1, 2): # to ensure no resetting
         result = topdown()(_add_lines_decorated)
         assert result == expected['line_count'] * i
