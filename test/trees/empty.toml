@@ -1,6 +1,9 @@
 [expected]
 fake_copy = "Would create folder /tmp if missing\n"
-naive_iterate = "mirror . -> /tmp\n"
+naive_iterate_topdown_dfs = "mirror . -> /tmp\n"
+naive_iterate_topdown_bfs = "mirror . -> /tmp\n"
+naive_iterate_bottomup_dfs = "mirror . -> /tmp\n"
+naive_iterate_bottomup_bfs = "mirror . -> /tmp\n"
 listing = ""
 count = [1, 0]
 line_count = 0

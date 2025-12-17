@@ -9,7 +9,7 @@ Would copy nested_folder_2/nested_folder_3/file_x to /tmp/nested_folder_2/nested
 Would copy nested_folder_2/nested_folder_3/file_y to /tmp/nested_folder_2/nested_folder_3/file_y
 Would copy nested_folder_2/nested_folder_3/file_z to /tmp/nested_folder_2/nested_folder_3/file_z
 """
-naive_iterate = """\
+naive_iterate_topdown_dfs = """\
 mirror . -> /tmp
 mirror example_file -> /tmp/example_file
 mirror nested_folder_1 -> /tmp/nested_folder_1
@@ -18,6 +18,36 @@ mirror nested_folder_2/nested_folder_3 -> /tmp/nested_folder_2/nested_folder_3
 mirror nested_folder_2/nested_folder_3/file_x -> /tmp/nested_folder_2/nested_folder_3/file_x
 mirror nested_folder_2/nested_folder_3/file_y -> /tmp/nested_folder_2/nested_folder_3/file_y
 mirror nested_folder_2/nested_folder_3/file_z -> /tmp/nested_folder_2/nested_folder_3/file_z
+"""
+naive_iterate_topdown_bfs = """\
+mirror . -> /tmp
+mirror example_file -> /tmp/example_file
+mirror nested_folder_1 -> /tmp/nested_folder_1
+mirror nested_folder_2 -> /tmp/nested_folder_2
+mirror nested_folder_2/nested_folder_3 -> /tmp/nested_folder_2/nested_folder_3
+mirror nested_folder_2/nested_folder_3/file_x -> /tmp/nested_folder_2/nested_folder_3/file_x
+mirror nested_folder_2/nested_folder_3/file_y -> /tmp/nested_folder_2/nested_folder_3/file_y
+mirror nested_folder_2/nested_folder_3/file_z -> /tmp/nested_folder_2/nested_folder_3/file_z
+"""
+naive_iterate_bottomup_dfs = """\
+mirror nested_folder_2/nested_folder_3/file_x -> /tmp/nested_folder_2/nested_folder_3/file_x
+mirror nested_folder_2/nested_folder_3/file_y -> /tmp/nested_folder_2/nested_folder_3/file_y
+mirror nested_folder_2/nested_folder_3/file_z -> /tmp/nested_folder_2/nested_folder_3/file_z
+mirror nested_folder_2/nested_folder_3 -> /tmp/nested_folder_2/nested_folder_3
+mirror example_file -> /tmp/example_file
+mirror nested_folder_1 -> /tmp/nested_folder_1
+mirror nested_folder_2 -> /tmp/nested_folder_2
+mirror . -> /tmp
+"""
+naive_iterate_bottomup_bfs = """\
+mirror nested_folder_2/nested_folder_3/file_x -> /tmp/nested_folder_2/nested_folder_3/file_x
+mirror nested_folder_2/nested_folder_3/file_y -> /tmp/nested_folder_2/nested_folder_3/file_y
+mirror nested_folder_2/nested_folder_3/file_z -> /tmp/nested_folder_2/nested_folder_3/file_z
+mirror nested_folder_2/nested_folder_3 -> /tmp/nested_folder_2/nested_folder_3
+mirror example_file -> /tmp/example_file
+mirror nested_folder_1 -> /tmp/nested_folder_1
+mirror nested_folder_2 -> /tmp/nested_folder_2
+mirror . -> /tmp
 """
 listing = """\
 example_file

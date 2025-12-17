@@ -63,12 +63,12 @@ def test_fake_copy(expected, capsys):
     _check_out(capsys, expected, 'fake_copy')
 
 
-def test_naive_iterate(expected, capsys):
+def test_naive_iterate_topdown_dfs(expected, capsys):
     # Use the sorted get so output is in a consistent order.
     for node in topdown('.', '/tmp', sort_key=lambda n: n.name):
         src, dst = node.current
         print(f"mirror {src} -> {dst}")
-    _check_out(capsys, expected, 'naive_iterate')
+    _check_out(capsys, expected, 'naive_iterate_topdown_dfs')
 
 
 def folder_count(f):
