@@ -1,6 +1,6 @@
 from tree_processing.filesystem import (
-    copy_files, not_hidden, propagate_folders,
-    raw_get, src_is_regular_file, topdown
+    copy_files, not_hidden, propagate_folders, raw_get, src_is_regular_file,
+    topdown, topdown_breadth_first
 )
 from tree_processing.actions import filterable, accumulator, sum_results
 
@@ -69,6 +69,14 @@ def test_naive_iterate_topdown_dfs(expected, capsys):
         src, dst = node.current
         print(f"mirror {src} -> {dst}")
     _check_out(capsys, expected, 'naive_iterate_topdown_dfs')
+
+
+def test_naive_iterate_topdown_bfs(expected, capsys):
+    # Use the sorted get so output is in a consistent order.
+    for node in topdown_breadth_first('.', '/tmp', sort_key=lambda n: n.name):
+        src, dst = node.current
+        print(f"mirror {src} -> {dst}")
+    _check_out(capsys, expected, 'naive_iterate_topdown_bfs')
 
 
 def folder_count(f):

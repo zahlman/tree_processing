@@ -1,3 +1,4 @@
+from collections import deque
 from functools import partial, wraps
 
 from . import rejected
@@ -46,22 +47,24 @@ def _partition(children):
     return internal_nodes, leaves
 
 
-def _organize(children, sort_key):
+def _organize(children, sort_key, depth_first):
     to_push, leaves = _partition(children)
     if sort_key is not None:
         leaves.sort(key=sort_key)
         # When a sort key is provided, we must be careful about the order of
-        # internal nodes. The first node in `to_push` will be pushed (or
-        # queued) first, meaning it will be processed *last*. Therefore we
-        # must reverse the list as well during sorting.
-        to_push.sort(key=sort_key, reverse=True)
+        # internal nodes. For depth-first traversals, the first node in
+        # `to_push` will be pushed first, meaning it will be processed *last*.
+        # Therefore we must reverse the list as well during sorting.
+        # For breadth-first traversals, the first node in `to_push` is still
+        # enqueued first, but it will also be processed first as a result.
+        to_push.sort(key=sort_key, reverse=depth_first)
     return to_push, leaves
 
 
-def _topdown_step(top, get, sort_key, enqueue):
+def _topdown_step(top, get, sort_key, depth_first, enqueue):
     if (yield top) is rejected:
         return
-    to_push, leaves = _organize(get(top), sort_key)
+    to_push, leaves = _organize(get(top), sort_key, depth_first)
     # We can't use `yield from` here, because the caller may use
     # `.send` which the list iterator doesn't support.
     for leaf in leaves:
@@ -69,9 +72,23 @@ def _topdown_step(top, get, sort_key, enqueue):
     enqueue(to_push)
 
 
+def _topdown(root, get, depth_first, sort_key):
+    stack = deque([root])
+    pop = stack.pop if depth_first else stack.popleft
+    enqueue = stack.extend
+    while stack:
+        yield from _topdown_step(pop(), get, sort_key, depth_first, enqueue)
+
+
 @traversal
 def topdown(root, get, *, sort_key=None):
-    stack = [root]
-    while stack:
-        top, enqueue = stack.pop(), stack.extend
-        yield from _topdown_step(top, get, sort_key, enqueue)
+    yield from _topdown(root, get, True, sort_key)
+top_down = topdown
+topdown_depth_first = topdown
+top_down_depth_first = topdown
+
+
+@traversal
+def topdown_breadth_first(root, get, *, sort_key=None):
+    yield from _topdown(root, get, False, sort_key)
+top_down_breadth_first = topdown_breadth_first
