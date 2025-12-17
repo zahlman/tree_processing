@@ -4,28 +4,27 @@ from . import rejected
 from .actions import _normalize_act
 
 
-def _process(traversal, act):
-    node, act = next(traversal), _normalize_act(act)
+def _process(nodes, act):
+    node, act = next(nodes), _normalize_act(act)
     while True:
         result = act(node)
         try:
-            node = traversal.send(result)
+            node = nodes.send(result)
         except StopIteration:
             return result
 
 
-def process(traverse, root, get_children, act, sort_key=None):
-    return _process(traverse(root, get_children, sort_key=sort_key), act)
+def process(walk, root, get, act, *, sort_key=None):
+    return _process(walk(root, get, sort_key=sort_key), act)
 
 
 class Traversal:
-    def __init__(self, traverse, root, get_children, sort_key=None):
-        self._traverse = partial(traverse, root, get_children)
-        self._sort_key = sort_key
+    def __init__(self, walk, root, get, *, sort_key=None):
+        self._walk = partial(walk, root, get, sort_key=sort_key)
 
 
     def __iter__(self):
-        yield from self._traverse(sort_key=self._sort_key)
+        yield from self._walk()
 
 
     def __call__(self, *act):
@@ -59,10 +58,10 @@ def _organize(children, sort_key):
     return to_push, leaves
 
 
-def _topdown_step(top, get_children, sort_key, enqueue):
+def _topdown_step(top, get, sort_key, enqueue):
     if (yield top) is rejected:
         return
-    to_push, leaves = _organize(get_children(top), sort_key)
+    to_push, leaves = _organize(get(top), sort_key)
     # We can't use `yield from` here, because the caller may use
     # `.send` which the list iterator doesn't support.
     for leaf in leaves:
@@ -71,8 +70,8 @@ def _topdown_step(top, get_children, sort_key, enqueue):
 
 
 @traversal
-def topdown(root_node, get_children, sort_key=None):
-    stack = [root_node]
+def topdown(root, get, *, sort_key=None):
+    stack = [root]
     while stack:
         top, enqueue = stack.pop(), stack.extend
-        yield from _topdown_step(top, get_children, sort_key, enqueue)
+        yield from _topdown_step(top, get, sort_key, enqueue)
