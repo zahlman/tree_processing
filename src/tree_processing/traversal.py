@@ -15,7 +15,7 @@ def _process(traversal, act):
 
 
 def process(traverse, root, get_children, act, sort_key=None):
-    return _process(iter(traverse(root, get_children, sort_key=sort_key)), act)
+    return _process(traverse(root, get_children, sort_key=sort_key), act)
 
 
 class Traversal:
