@@ -29,26 +29,6 @@ mirror nested_folder_2/nested_folder_3/file_x -> /tmp/nested_folder_2/nested_fol
 mirror nested_folder_2/nested_folder_3/file_y -> /tmp/nested_folder_2/nested_folder_3/file_y
 mirror nested_folder_2/nested_folder_3/file_z -> /tmp/nested_folder_2/nested_folder_3/file_z
 """
-naive_iterate_bottomup_dfs = """\
-mirror nested_folder_2/nested_folder_3/file_x -> /tmp/nested_folder_2/nested_folder_3/file_x
-mirror nested_folder_2/nested_folder_3/file_y -> /tmp/nested_folder_2/nested_folder_3/file_y
-mirror nested_folder_2/nested_folder_3/file_z -> /tmp/nested_folder_2/nested_folder_3/file_z
-mirror nested_folder_2/nested_folder_3 -> /tmp/nested_folder_2/nested_folder_3
-mirror example_file -> /tmp/example_file
-mirror nested_folder_1 -> /tmp/nested_folder_1
-mirror nested_folder_2 -> /tmp/nested_folder_2
-mirror . -> /tmp
-"""
-naive_iterate_bottomup_bfs = """\
-mirror nested_folder_2/nested_folder_3/file_x -> /tmp/nested_folder_2/nested_folder_3/file_x
-mirror nested_folder_2/nested_folder_3/file_y -> /tmp/nested_folder_2/nested_folder_3/file_y
-mirror nested_folder_2/nested_folder_3/file_z -> /tmp/nested_folder_2/nested_folder_3/file_z
-mirror nested_folder_2/nested_folder_3 -> /tmp/nested_folder_2/nested_folder_3
-mirror example_file -> /tmp/example_file
-mirror nested_folder_1 -> /tmp/nested_folder_1
-mirror nested_folder_2 -> /tmp/nested_folder_2
-mirror . -> /tmp
-"""
 listing = """\
 example_file
 nested_folder_2/nested_folder_3/file_x
